@@ -1,5 +1,8 @@
 # User customized prompt (never overwrite)
 references/personalized-summary-prompt.md
 
+# User secrets
+.env
+
 # Update check cache
 .cache/

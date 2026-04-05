@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Install wutiao-news skill for OpenClaw
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/nickelc/wutiao-news/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/osen77/wutiao-news/main/install.sh | bash
 #   curl -fsSL ... | bash -s -- /custom/path/to/wutiao-news
 
 set -euo pipefail
@@ -30,6 +30,20 @@ USER_PROMPT="$INSTALL_DIR/references/personalized-summary-prompt.md"
 if [ -f "$DEFAULT_PROMPT" ] && [ ! -f "$USER_PROMPT" ]; then
     cp "$DEFAULT_PROMPT" "$USER_PROMPT"
     echo "Created customizable prompt: references/personalized-summary-prompt.md"
+fi
+
+# Configure token (if not already set)
+ENV_FILE="$INSTALL_DIR/.env"
+if [ ! -f "$ENV_FILE" ] || ! grep -q "WUTIAO_TOKEN" "$ENV_FILE" 2>/dev/null; then
+    echo ""
+    read -rp "Enter your wutiao-news token (ask the admin for one): " TOKEN
+    if [ -n "$TOKEN" ]; then
+        echo "WUTIAO_TOKEN=$TOKEN" >> "$ENV_FILE"
+        echo "Token saved to .env"
+    else
+        echo "Warning: No token configured. API calls will fail."
+        echo "Set it later: echo 'WUTIAO_TOKEN=xxxx' > $ENV_FILE"
+    fi
 fi
 
 echo ""
