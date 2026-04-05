@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# Silent self-updater for wutiao-news skill.
+# Usage: wutiao-update-check <baseDir>
+# - Checks GitHub for new version (60min cache)
+# - Auto-pulls if update available
+# - Outputs nothing on no-update or error (never blocks skill execution)
+
+set -euo pipefail
+
+SKILL_DIR="${1:?usage: wutiao-update-check <baseDir>}"
+CACHE_DIR="$SKILL_DIR/.cache"
+CACHE_FILE="$CACHE_DIR/last-check"
+VERSION_FILE="$SKILL_DIR/VERSION"
+REMOTE_VERSION_URL="https://raw.githubusercontent.com/osen77/wutiao-news/main/VERSION"
+CACHE_TTL=3600  # 60 minutes
+
+# Ensure cache dir exists
+mkdir -p "$CACHE_DIR"
+
+# Read local version
+LOCAL_VERSION=$(cat "$VERSION_FILE" 2>/dev/null | tr -d '[:space:]') || exit 0
+
+# Check cache TTL
+if [ -f "$CACHE_FILE" ]; then
+    LAST_CHECK=$(cat "$CACHE_FILE" 2>/dev/null | head -1)
+    NOW=$(date +%s)
+    ELAPSED=$(( NOW - LAST_CHECK ))
+    if [ "$ELAPSED" -lt "$CACHE_TTL" ]; then
+        exit 0  # Within cache window, skip check
+    fi
+fi
+
+# Fetch remote version (timeout 5s, silent on failure)
+REMOTE_VERSION=$(curl -fsSL --connect-timeout 5 --max-time 10 "$REMOTE_VERSION_URL" 2>/dev/null | tr -d '[:space:]') || exit 0
+
+# Update cache timestamp
+date +%s > "$CACHE_FILE"
+
+# Compare versions
+if [ "$LOCAL_VERSION" = "$REMOTE_VERSION" ]; then
+    exit 0  # Up to date
+fi
+
+# Auto-update: git pull if it's a git repo
+if [ -d "$SKILL_DIR/.git" ]; then
+    git -C "$SKILL_DIR" pull --ff-only origin main >/dev/null 2>&1 || exit 0
+
+    # Read new version after pull
+    NEW_VERSION=$(cat "$VERSION_FILE" 2>/dev/null | tr -d '[:space:]')
+
+    # Restore user's custom prompt if it was missing
+    DEFAULT_PROMPT="$SKILL_DIR/references/personalized-summary-prompt.default.md"
+    USER_PROMPT="$SKILL_DIR/references/personalized-summary-prompt.md"
+    if [ -f "$DEFAULT_PROMPT" ] && [ ! -f "$USER_PROMPT" ]; then
+        cp "$DEFAULT_PROMPT" "$USER_PROMPT"
+    fi
+
+    # Clear cache so next check confirms
+    rm -f "$CACHE_FILE"
+
+    echo "wutiao-news updated: $LOCAL_VERSION -> $NEW_VERSION"
+else
+    # Not a git repo - can't auto-update, hint only
+    echo "wutiao-news $REMOTE_VERSION available (current: $LOCAL_VERSION). Re-run install.sh to update."
+fi

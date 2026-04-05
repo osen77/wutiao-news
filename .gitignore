@@ -1,0 +1,5 @@
+# User customized prompt (never overwrite)
+references/personalized-summary-prompt.md
+
+# Update check cache
+.cache/
