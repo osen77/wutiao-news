@@ -4,5 +4,8 @@ references/personalized-summary-prompt.md
 # User secrets
 .env
 
+# Internal docs (not for distribution)
+.release-guide.md
+
 # Update check cache
 .cache/
