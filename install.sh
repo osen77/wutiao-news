@@ -56,6 +56,14 @@ with open(path, 'r') as f:
 cfg.setdefault('skills', {}).setdefault('entries', {}).setdefault('wutiao-news', {}).setdefault('env', {})
 cfg['skills']['entries']['wutiao-news']['env']['WUTIAO_TOKEN'] = token
 
+# Remove invalid fields that cause config validation failure
+ALLOWED_KEYS = {'enabled', 'apiKey', 'env', 'config'}
+entry = cfg['skills']['entries']['wutiao-news']
+bad_keys = [k for k in entry if k not in ALLOWED_KEYS]
+for k in bad_keys:
+    del entry[k]
+    print(f'  Removed invalid field: {k}')
+
 with open(path, 'w') as f:
     json.dump(cfg, f, indent=2, ensure_ascii=False)
     f.write('\n')
