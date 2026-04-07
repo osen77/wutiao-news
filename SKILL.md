@@ -17,12 +17,11 @@ _UPD=$({baseDir}/bin/wutiao-update-check "{baseDir}" 2>/dev/null || true)
 ## API 配置
 
 - Base URL: `https://wutiao.toolpai.com`
-- Token: 安装时配置，保存在 `{baseDir}/.env`
+- Token: 通过 `openclaw.json` → `skills.entries.wutiao-news.env` 自动注入，**无需手动读取**
 
-所有 API 调用使用 curl + JSON，需带 Authorization header：
+所有 API 调用使用 curl + JSON，直接用 `$WUTIAO_TOKEN`（已自动在环境变量中）：
 ```bash
-TOKEN=$(cat {baseDir}/.env 2>/dev/null | grep WUTIAO_TOKEN | cut -d= -f2)
-curl -s -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" "https://wutiao.toolpai.com/api/news/..."
+curl -s -H "Content-Type: application/json" -H "Authorization: Bearer $WUTIAO_TOKEN" "https://wutiao.toolpai.com/api/news/..."
 ```
 
 ## 用户识别
